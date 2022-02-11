@@ -2,6 +2,7 @@ const express = require('express')
 const app = express()
 
 app.set('port', process.env.PORT || 3001)
+app.use(express.json())
 app.locals.title = 'Graphic Novels'
 app.locals.novels = [
   { id: 1, title: 'Saga', main_characters: ['Alana', 'Marko', 'Hazel', 'Izabel', 'Klara', 'Prince Robot IV', 'The Will', 'Sophie', 'Gwendolyn'], plot_synopsis: 'Husband and wife, Alana and Marko, from long-warring extraterrestrial races, flee authorities from both sides of a galactic war as they struggle to care for their daughter, Hazel, who is born in the beginning of the series, and who occasionally narrates the series as an unseen adult.', writers: ['Brian K Vaughn'], artists: ['Fiona Staples'], publisher: 'Image', genres: ['space opera', 'fantasy'], images: ['https://images-na.ssl-images-amazon.com/images/I/71a2KfLjetL.jpg', 'https://cdn.theatlantic.com/thumbor/OTWMfvsscntIDaUWaqmhP1hkSGk=/0x15:1440x765/960x500/media/img/mt/2014/11/saga/original.jpg', 'https://images-na.ssl-images-amazon.com/images/S/cmx-images-prod/Item/60728/DIG014382_3._SX360_QL80_TTD_.jpg'], amazon_link: 'https://www.amazon.com/Saga-Compendium-Brian-K-Vaughan/dp/153431346X/ref=asc_df_153431346X/?tag=hyprod-20&linkCode=df0&hvadid=366433089512&hvpos=&hvnetw=g&hvrand=1996310599172148908&hvpone=&hvptwo=&hvqmt=&hvdev=c&hvdvcmdl=&hvlocint=&hvlocphy=1014437&hvtargid=pla-715522572154&psc=1&tag=&ref=&adgrpid=78795691880&hvpone=&hvptwo=&hvadid=366433089512&hvpos=&hvnetw=g&hvrand=1996310599172148908&hvqmt=&hvdev=c&hvdvcmdl=&hvlocint=&hvlocphy=1014437&hvtargid=pla-715522572154' },
@@ -25,6 +26,54 @@ app.get('/api/v1/novels', (request, response) => {
   const novels = app.locals.novels
 
   response.status(200).json({ novels })
+})
+
+app.get('/api/v1/novels/:id', (request, response) => {
+  const { id } = request.params
+  const novel = app.locals.novels.find(novel => novel.id === parseInt(id))
+  if (!novel) {
+    return response.status(404).json({
+      message: `No novel found with id of #${id}.`
+    })
+  }
+
+  response.status(200).json({ novel })
+})
+
+app.post('/api/v1/novels', (request, response) => {
+  const id = Date.now()
+  const novel = request.body
+ 
+  for (let requiredParameter of ['title', 'main_characters', 'plot_synopsis', 'writers', 'artists', 'publisher', 'genres', 'images']) {
+    if (!novel[requiredParameter]) {
+      response
+        .status(422)
+        .send({ error: `Expected format: { title: <String>, main_characters: <Array>, plot_synopsis: <String>, writers: <Array>, artists: <Array>, publisher: <String>, genres: <Array>, images: <Array>}. You're missing a "${requiredParameter}" property`})
+    }
+  }
+
+  const { title, main_characters, plot_synopsis, writers, artists, publisher, genres, images } = novel
+  app.locals.novels.push({ id, title, main_characters, plot_synopsis, writers, artists, publisher, genres, images })
+  response.status(201).json({ id, title, main_characters, plot_synopsis, writers, artists, publisher, genres, images })
+})
+
+app.delete('/api/v1/novels/:id', (request, response) => {
+  const { id } = request.params
+  const { novels } = app.locals
+
+  const novelToDelete = novels.find(novel => novel.id === parseInt(id))
+
+  if (!novelToDelete) {
+    return response.status(404).json({
+      message: `No novel found with id of #${id}.`
+    })
+  }
+
+  app.locals.novels = novels.filter(novel => novel.id !== parseInt(id))
+
+  response.status(200).json({
+    message: `Novel #${id} has been deleted`
+  })
 })
 
 app.listen(app.get('port'), () => {
