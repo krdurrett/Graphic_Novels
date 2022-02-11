@@ -1,4 +1,5 @@
 const express = require('express')
+const res = require('express/lib/response')
 const app = express()
 
 app.set('port', process.env.PORT || 3001)
@@ -50,6 +51,36 @@ app.post('/api/v1/novels', (request, response) => {
         .status(422)
         .send({ error: `Expected format: { title: <String>, main_characters: <Array>, plot_synopsis: <String>, writers: <Array>, artists: <Array>, publisher: <String>, genres: <Array>, images: <Array>}. You're missing a "${requiredParameter}" property`})
     }
+  }
+
+  if (typeof main_characters !== 'array') {
+    return res.status(422).json({
+      message: `Invalid main_characters type. Must be an array`
+    })
+  }
+
+  if (typeof writers !== 'array') {
+    return res.status(422).json({
+      message: `Invalid writers type. Must be an array`
+    })
+  }
+
+  if (typeof artists !== 'array') {
+    return res.status(422).json({
+      message: `Invalid artists type. Must be an array`
+    })
+  }
+
+  if (typeof genres !== 'array') {
+    return res.status(422).json({
+      message: `Invalid genres type. Must be an array`
+    })
+  }
+
+  if (typeof images !== 'array') {
+    return res.status(422).json({
+      message: `Invalid images type. Must be an array`
+    })
   }
 
   const { title, main_characters, plot_synopsis, writers, artists, publisher, genres, images } = novel
