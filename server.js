@@ -91,7 +91,6 @@ app.post('/api/v1/novels', (request, response) => {
 app.delete('/api/v1/novels/:id', (request, response) => {
   const { id } = request.params
   const { novels } = app.locals
-
   const novelToDelete = novels.find(novel => novel.id === parseInt(id))
 
   if (!novelToDelete) {
@@ -105,6 +104,31 @@ app.delete('/api/v1/novels/:id', (request, response) => {
   response.status(200).json({
     message: `Novel #${id} has been deleted`
   })
+})
+
+app.patch('/api/v1/novels/:id', (request, response) => {
+  const { id } = request.params
+  const { novels } = app.locals 
+  const novel = novels.find(novel => novel.id === parseInt(id))
+
+  for (let requiredParameter of ['images']) {
+    if (!request.body[requiredParameter]) {
+      response
+        .status(422)
+        .send({ error: `Expected format: { images: <STRING>}. You're missing a "${requiredParameter}" property`})
+    }
+  }
+
+  if (!novel) {
+    return response.status(404).json({
+      message: `No novel found with id of #${id}.`
+    })
+  }
+
+  novel.images.push(request.body.images)
+  novel.amazon_link = request.body.amazon_link
+
+  response.status(200).json(novel)
 })
 
 app.listen(app.get('port'), () => {
